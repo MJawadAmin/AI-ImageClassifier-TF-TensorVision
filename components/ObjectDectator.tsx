@@ -21,9 +21,17 @@ const ObjectDetector = () => {
   const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
   const [isModelLoading, setIsModelLoading] = useState(true);
   const [detectedObjects, setDetectedObjects] = useState<Detection[]>([]);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure component only renders on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load TensorFlow model
   useEffect(() => {
+    if (!mounted) return;
+    
     const loadModel = async () => {
       setIsModelLoading(true);
       try {
@@ -38,11 +46,11 @@ const ObjectDetector = () => {
     };
 
     loadModel();
-  }, []);
+  }, [mounted]);
 
   // Setup webcam
   useEffect(() => {
-    if (!model || isModelLoading) return;
+    if (!mounted || !model || isModelLoading) return;
 
     const setupCamera = async () => {
       if (!videoRef.current) return;
@@ -64,19 +72,23 @@ const ObjectDetector = () => {
     // Cleanup function
     return () => {
       if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach(track => track.stop());
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((track: MediaStreamTrack) => track.stop());
       }
     };
-  }, [model, isModelLoading]);
+  }, [mounted, model, isModelLoading]);
 
   // Perform object detection
   useEffect(() => {
-    if (!model || !videoRef.current || !canvasRef.current) return;
+    if (!mounted || !model || !videoRef.current || !canvasRef.current) return;
 
     const detectObjects = async () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
+      if (!video || !canvas) return;
+      
       const ctx = canvas.getContext('2d');
+      if (!ctx) return;
 
       const updateCanvas = () => {
         if (video.videoWidth && video.videoHeight) {
@@ -88,7 +100,7 @@ const ObjectDetector = () => {
       video.addEventListener('loadedmetadata', updateCanvas);
 
       const detect = async () => {
-        if (video.readyState === 4) {
+        if (video.readyState === 4 && video && canvas && ctx) {
           updateCanvas();
           
           const predictions = await model.detect(video);
@@ -123,40 +135,46 @@ const ObjectDetector = () => {
     };
 
     detectObjects();
-  }, [model]);
+  }, [mounted, model]);
 
   return (
     <div className="flex flex-col items-center justify-center w-full h-full">
       <h1 className="text-3xl font-bold mb-4">Real-Time Object Detection</h1>
       
-      {isModelLoading && <p className="text-lg">Loading model... Please wait.</p>}
+      {!mounted ? (
+        <p className="text-lg">Loading...</p>
+      ) : (
+        <>
+          {isModelLoading && <p className="text-lg">Loading model... Please wait.</p>}
 
-      <div className="relative w-full max-w-2xl">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-auto rounded-lg shadow-lg"
-          style={{ display: isModelLoading ? 'none' : 'block' }}
-        />
-        <canvas
-          ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full"
-          style={{ display: isModelLoading ? 'none' : 'block' }}
-        />
-      </div>
+          <div className="relative w-full max-w-2xl">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-auto rounded-lg shadow-lg"
+              style={{ display: isModelLoading ? 'none' : 'block' }}
+            />
+            <canvas
+              ref={canvasRef}
+              className="absolute top-0 left-0 w-full h-full"
+              style={{ display: isModelLoading ? 'none' : 'block' }}
+            />
+          </div>
 
-      <div className="mt-4">
-        <h2 className="text-xl font-semibold">Detected Objects:</h2>
-        <ul className="list-disc pl-5">
-          {detectedObjects.map((obj, index) => (
-            <li key={index}>
-              {obj.class} ({Math.round(obj.score * 100)}% confidence)
-            </li>
-          ))}
-        </ul>
-      </div>
+          <div className="mt-4">
+            <h2 className="text-xl font-semibold">Detected Objects:</h2>
+            <ul className="list-disc pl-5">
+              {detectedObjects.map((obj, index) => (
+                <li key={index}>
+                  {obj.class} ({Math.round(obj.score * 100)}% confidence)
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
     </div>
   );
 };

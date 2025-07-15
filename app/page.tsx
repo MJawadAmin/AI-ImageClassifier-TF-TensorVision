@@ -1,5 +1,6 @@
 // src/app/page.js
 import ObjectDetector from '@/components/ObjectDectator';
+import ClientOnly from '@/components/ClientOnly';
 import './globals.css';
 
 export const metadata = {
@@ -10,7 +11,9 @@ export const metadata = {
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4 bg-gray-100">
-      <ObjectDetector />
+      <ClientOnly fallback={<div className="text-lg">Loading Object Detector...</div>}>
+        <ObjectDetector />
+      </ClientOnly>
     </main>
   );
 }
