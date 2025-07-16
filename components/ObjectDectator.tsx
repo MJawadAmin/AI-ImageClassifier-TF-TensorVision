@@ -39,7 +39,7 @@ const ObjectDetector = () => {
         setModel(loadedModel);
         console.log('Model loaded successfully!');
       } catch (error) {
-        console.error('Failed to load model:', error);
+        console.error('Failed to load model: ', error);
       } finally {
         setIsModelLoading(false);
       }
