@@ -8,7 +8,7 @@ import * as cocoSsd from '@tensorflow-models/coco-ssd';
 // Force TensorFlow.js to use the CPU backend
 tf.setBackend('cpu');
 
-// Define types for better TypeScript support
+// Define types for better TypeScript supports are
 interface Detection {
   class: string;
   score: number;
