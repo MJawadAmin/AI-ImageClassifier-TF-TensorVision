@@ -12,7 +12,7 @@ tf.setBackend('cpu');
 interface Detection {
   class: string;
   score: number;
-  bbox: [number, number, number, number]; // [x, y, width, height]
+  bbox: [number, number, number, number]; // this width and height [x, y, width, height]
 }
 
 const ObjectDetector = () => {
