@@ -11,7 +11,7 @@ import argparse
 
 def install_requirements():
     """Install required packages"""
-    print("📦 Installing required packages...")
+    print("📦 Installing required packages.... ")
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
         print("✅ Requirements installed successfully!")
